@@ -1,0 +1,17 @@
+.content{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 120px;
+  justify-content: space-between;
+}
+.input{
+  width: 500px;
+}
+.tips{
+  font-size: 18px;
+  font-weight: bold;
+}
+.btn{
+  width: 100px;
+}

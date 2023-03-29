@@ -1,0 +1,18 @@
+.merge{
+  width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+}
+.merge_wrap{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  height: 160px;
+}
+.merge_upload{
+  flex: 1;
+}
+.upload_space{
+  flex-shrink: 0;
+  width: 10px;
+}
