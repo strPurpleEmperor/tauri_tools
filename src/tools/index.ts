@@ -54,6 +54,17 @@ export const RULES: Rule[] = [
 		},
 	},
 	{
+		ruleName: '保留两位小数（千分位表示）',
+		rule: (val: number) => {
+			if (val)
+				return val.toLocaleString(void 0, {
+					maximumFractionDigits: 2,
+					minimumFractionDigits: 2,
+				});
+			return val;
+		},
+	},
+	{
 		ruleName: '日期：2023/03/01',
 		rule: (val: string) => {
 			if (val) return dayjs(val)?.format('YYYY/MM/DD');
