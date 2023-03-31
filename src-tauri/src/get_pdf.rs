@@ -16,7 +16,7 @@ pub fn print_pdf(url:String) -> Result<PDF,Box<dyn Error>>{
     tab.navigate_to(&*url)?;
     let ten_millis = Duration::from_millis(3000);
     sleep(ten_millis);
-    let title = tab.get_title()?;
+    let title = tab.find_element("title")?.get_inner_text()?;
     let pdf = tab.print_to_pdf(Option::from(PrintToPdfOptions{
         landscape: None,
         display_header_footer: Option::from(false),

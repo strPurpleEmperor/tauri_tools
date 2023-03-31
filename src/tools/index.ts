@@ -1,5 +1,6 @@
-import FileSaver from 'file-saver';
 import dayjs from 'dayjs';
+import { dialog, fs } from '@tauri-apps/api';
+import { message } from 'antd';
 import { PDFTYPE, Rule } from '../types';
 
 export function buffer2Url(buffer?: number[]) {
@@ -13,10 +14,18 @@ export function buffer2Url(buffer?: number[]) {
 
 export function downLoadPDF(pdf: PDFTYPE | null) {
 	if (!pdf) return;
-	const file = new Blob([new Uint8Array(pdf.pdf)], {
-		type: 'application/pdf',
+	dialog.save({ defaultPath: `${pdf.title}.pdf` }).then((res) => {
+		if (res) {
+			fs
+				.writeBinaryFile(res, pdf.pdf)
+				.then(() => {
+					message.success('保存成功');
+				})
+				.catch(() => {
+					message.error('保存失败请联系开发者');
+				});
+		}
 	});
-	FileSaver.saveAs(file, `${pdf.title}.pdf`);
 }
 
 export function getFileType(v?: string): [string, string] {

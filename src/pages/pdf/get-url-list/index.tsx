@@ -3,9 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Input, message, Space, Spin, Table } from 'antd';
-import FileSaver from 'file-saver';
 import './index.css';
-import { invoke } from '@tauri-apps/api';
+import { dialog, fs, invoke } from '@tauri-apps/api';
 import { useAtom, useSetAtom } from 'jotai';
 import { loadingValue, pageSizeValue, selectUrlValue, urlListValue, urlValue } from '../../../atom/PDF/getUrlList';
 import { getUrlListVal } from '../../../atom/PDF';
@@ -36,7 +35,7 @@ function Index() {
 				setLoading(false);
 			});
 	}
-	function getUrl(o: any[], s: number[]) {
+	function getUrl(o: any[], s: number[]): string[] {
 		const res = [];
 		for (let i = 0; i < s.length; i++) {
 			res.push(o[s[i]]?.url || '');
@@ -45,10 +44,18 @@ function Index() {
 	}
 	function saveURL() {
 		if (!selectUrl.length) return message.info('没有选择的URL');
-		const blob = new Blob([JSON.stringify(getUrl(urlList, selectUrl))], {
-			type: 'text/plain;charset=utf-8',
+		dialog.save({ defaultPath: 'url-list.txt' }).then((res) => {
+			if (res) {
+				fs
+					.writeTextFile(res, JSON.stringify(getUrl(urlList, selectUrl)))
+					.then(() => {
+						message.success('保存成功');
+					})
+					.catch(() => {
+						message.error('保存失败请联系开发者');
+					});
+			}
 		});
-		FileSaver.saveAs(blob, 'url-list.txt');
 	}
 	function toSelectAll() {
 		if (!selectAll) {

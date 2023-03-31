@@ -3,11 +3,11 @@
 import './index.css';
 import { DeleteOutlined, InboxOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Image, Input, message, Modal, Select, Space, Upload } from 'antd';
-import FileSaver from 'file-saver';
 import JSZip from 'jszip';
 import xlsx from 'node-xlsx';
 import React, { useEffect, useState } from 'react';
 import { TemplateHandler } from 'easy-template-x';
+import { dialog, fs } from '@tauri-apps/api';
 import mergeDemo from '../../../assets/merge_demo.png';
 import { getFileType, isNotVoidObj, RULES, void2empty } from '../../../tools';
 import { Rule } from '../../../types';
@@ -56,7 +56,7 @@ function Merge() {
 			});
 			const notVoid = isNotVoidObj(data);
 			if (notVoid) {
-				const buf = new TemplateHandler().process(Buffer.from(word), void2empty(data));
+				const buf = new TemplateHandler().process(word, void2empty(data));
 				let name = fileName.replace(/{([\W\w]+)}/g, function f(match, $1) {
 					return data[$1];
 				});
@@ -76,9 +76,24 @@ function Merge() {
 			});
 		});
 		const rename = new Date().toString();
-		await jsZip.generateAsync({ type: 'blob' }).then((content) => {
-			// 生成二进制流
-			FileSaver.saveAs(content, rename); // 利用file-saver保存文件  自定义文件名
+		await jsZip.generateAsync({ type: 'arraybuffer' }).then((content) => {
+			dialog
+				.save({
+					defaultPath: `${rename}.zip`,
+				})
+				.then((res) => {
+					if (res) {
+						fs
+							.writeBinaryFile(res, content)
+							.then(() => {
+								message.success('保存成功');
+							})
+							.catch(() => {
+								message.error('保存失败请联系开发者');
+							});
+					}
+				});
+			// fs.writeFile()
 		});
 		setLoading(false);
 	}

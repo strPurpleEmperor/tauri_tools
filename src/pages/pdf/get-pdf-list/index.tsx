@@ -2,19 +2,17 @@
 
 import { CaretRightOutlined, PauseOutlined, StopOutlined } from '@ant-design/icons';
 import { Button, Image, message, Modal, Space, Spin, Table, Upload } from 'antd';
-import FileSaver from 'file-saver';
 import { useAtom } from 'jotai';
 import JSZip from 'jszip';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
-import { invoke } from '@tauri-apps/api';
+import { dialog, fs, invoke } from '@tauri-apps/api';
 import { getUrlListVal } from '../../../atom/PDF';
 import { fileListValue, isPrinting, pdfListValue, PDFStack, statusValue, urlStack } from '../../../atom/PDF/getPDFList';
 import { buffer2Url } from '../../../tools';
 import { PDFTYPE } from '../../../types';
 
 function GetPDFList() {
-	const timer = useRef<number>(-1);
 	const [urlQue, setUrlQue] = useAtom(urlStack);
 	const [pdfQue, setPDFQue] = useAtom(PDFStack);
 	const [pdfList, setPdfList] = useAtom(pdfListValue);
@@ -22,7 +20,7 @@ function GetPDFList() {
 	const [loading, setLoading] = useAtom(isPrinting);
 	const [urlList, setUrlList] = useAtom(getUrlListVal);
 	const [status, setStatus] = useAtom(statusValue); // 0没有文件，1有文件未开始，2进行中，3暂停,4完成
-	function getPDFList() {
+	const getPDFList = useCallback(async () => {
 		if (loading || status !== 2) return;
 		setLoading(true);
 		const _urlQue = [...urlQue];
@@ -32,7 +30,9 @@ function GetPDFList() {
 				setPDFQue([]);
 			}
 			const url = _urlQue.shift();
-			invoke<PDFTYPE>('get_pdf_list', { url }).then((res) => {
+			setUrlQue(_urlQue);
+			setUrlList(_urlQue);
+			invoke<PDFTYPE>('get_one_pdf', { url }).then((res) => {
 				if (status === 2) {
 					setPdfList(pdfList.concat(res));
 				} else {
@@ -40,18 +40,35 @@ function GetPDFList() {
 				}
 				setLoading(false);
 			});
-			setUrlQue(_urlQue);
-			setUrlList(_urlQue);
 		} else {
 			if (urlList.length < 1) {
 				setStatus(4);
 			}
 			setLoading(false);
 		}
+	}, [loading, pdfList, pdfQue, status, urlList, urlQue]);
+	function getOnePDF(url: string) {
+		return invoke('get_one_pdf', { url });
 	}
 	useEffect(() => {
+		if (urlList.length && pdfList.length) {
+			Modal.confirm({
+				title: '提示',
+				content: '有进行中的任务是否覆盖',
+				onOk: () => {
+					setPdfList([]);
+					setStatus(2);
+					setUrlQue(urlList);
+				},
+			});
+		}
+		return () => {
+			setUrlList([]);
+		};
+	}, []);
+	useEffect(() => {
 		getPDFList();
-	}, [urlQue, loading, status]);
+	}, [urlQue, loading, status, pdfQue]);
 	function toStart() {
 		const reader = new FileReader();
 		reader.readAsText(fileList[0].originFileObj);
@@ -68,11 +85,12 @@ function GetPDFList() {
 	}
 	function fileChange(e: any) {
 		if (e.fileList.length) {
-			if (status === 2) {
+			if (pdfList.length) {
 				Modal.confirm({
-					content: '有正在进行中的任务，是否覆盖？',
+					content: '有没有保存的任务，是否覆盖？',
 					onOk: () => {
 						toStop();
+						setPdfList([]);
 						setStatus(1);
 						setFileList(e.fileList);
 					},
@@ -98,13 +116,24 @@ function GetPDFList() {
 		const rename = new Date().toString();
 		Promise.all(promises)
 			.then(() => {
-				zip.generateAsync({ type: 'blob' }).then((content) => {
+				zip.generateAsync({ type: 'arraybuffer' }).then((content) => {
 					// 生成二进制流
-					FileSaver.saveAs(content, rename); // 利用file-saver保存文件  自定义文件名
+					dialog.save({ defaultPath: `${rename}.zip` }).then((res) => {
+						if (res) {
+							fs
+								.writeBinaryFile(res, content)
+								.then(() => {
+									message.success('保存成功');
+								})
+								.catch(() => {
+									message.error('保存失败请联系开发者');
+								});
+						}
+					});
 				});
 			})
 			.catch(() => {
-				message.error('保存失败请重试');
+				message.error('保存失败请联系开发者');
 			});
 	}
 	function toPause() {
