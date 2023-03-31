@@ -149,7 +149,7 @@ function Merge() {
 						<p className="ant-upload-drag-icon">
 							<InboxOutlined />
 						</p>
-						<p className="ant-upload-text">上传或者拖拽word模板</p>
+						<p className="ant-upload-text">点击上传word模板</p>
 					</div>
 				</Upload.Dragger>
 				<div className="upload_space" />
@@ -169,7 +169,7 @@ function Merge() {
 					<p className="ant-upload-drag-icon">
 						<InboxOutlined />
 					</p>
-					<p className="ant-upload-text">上传或者拖拽Excel数据</p>
+					<p className="ant-upload-text">点击上传Excel数据</p>
 				</Upload.Dragger>
 			</div>
 			<Card title="格式化配置">
