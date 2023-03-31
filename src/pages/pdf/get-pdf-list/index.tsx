@@ -19,22 +19,29 @@ function GetPDFList() {
 	const [fileList, setFileList] = useAtom(fileListValue);
 	const [loading, setLoading] = useAtom(isPrinting);
 	const [urlList, setUrlList] = useAtom(getUrlListVal);
-	const [status, setStatus] = useAtom(statusValue); // 0没有文件，1有文件未开始，2进行中，3暂停,4完成
+	const setStatus = (val: any) => {
+		statusValue.value = val;
+		statusValue.subscribe();
+	};
 	const getPDFList = useCallback(async () => {
-		if (loading || status !== 2) return;
+		if (loading || statusValue.value !== 2) return;
 		setLoading(true);
 		const _urlQue = [...urlQue];
 		if (_urlQue.length || pdfQue.length) {
-			if (pdfQue.length) {
-				setPdfList(pdfList.concat(pdfQue));
-				setPDFQue([]);
-			}
 			const url = _urlQue.shift();
 			setUrlQue(_urlQue);
 			setUrlList(_urlQue);
 			invoke<PDFTYPE>('get_one_pdf', { url }).then((res) => {
-				if (status === 2) {
-					setPdfList(pdfList.concat(res));
+				if (statusValue.value === 2) {
+					const arr = [];
+					if (pdfQue.length) {
+						pdfQue.forEach((p) => {
+							arr.push(p);
+						});
+						setPDFQue([]);
+					}
+					arr.push(res);
+					setPdfList(pdfList.concat(arr));
 				} else {
 					setPDFQue(pdfQue.concat(res));
 				}
@@ -46,10 +53,7 @@ function GetPDFList() {
 			}
 			setLoading(false);
 		}
-	}, [loading, pdfList, pdfQue, status, urlList, urlQue]);
-	function getOnePDF(url: string) {
-		return invoke('get_one_pdf', { url });
-	}
+	}, [loading, pdfList, pdfQue, urlList, urlQue]);
 	useEffect(() => {
 		if (urlList.length && pdfList.length) {
 			Modal.confirm({
@@ -68,7 +72,7 @@ function GetPDFList() {
 	}, []);
 	useEffect(() => {
 		getPDFList();
-	}, [urlQue, loading, status, pdfQue]);
+	}, [urlQue, loading, pdfQue]);
 	function toStart() {
 		const reader = new FileReader();
 		reader.readAsText(fileList[0].originFileObj);
@@ -173,12 +177,12 @@ function GetPDFList() {
 			>
 				<div style={{ display: 'flex', alignItems: 'center' }}>
 					<div style={{ marginRight: 20 }}>
-						{status === 1 && (
+						{statusValue.value === 1 && (
 							<Button type="primary" icon={<CaretRightOutlined />} onClick={toStart}>
 								开始
 							</Button>
 						)}
-						{status === 2 && (
+						{statusValue.value === 2 && (
 							<Space>
 								<Button icon={<PauseOutlined />} danger onClick={toPause}>
 									暂停
@@ -188,21 +192,21 @@ function GetPDFList() {
 								</Button>
 							</Space>
 						)}
-						{status === 3 && (
+						{statusValue.value === 3 && (
 							<Button icon={<CaretRightOutlined />} type="primary" onClick={toContinue}>
 								继续
 							</Button>
 						)}
 					</div>
-					{status === 2 && (
+					{statusValue.value === 2 && (
 						<div>
 							PDF 生成中，请稍后……
 							<Spin />
 						</div>
 					)}
 				</div>
-				{!status && <div />}
-				<Button disabled={status !== 4 || !pdfList.length} onClick={saveAllPDF}>
+				{!statusValue.value && <div />}
+				<Button disabled={statusValue.value !== 4 || !pdfList.length} onClick={saveAllPDF}>
 					保存全部
 				</Button>
 			</div>

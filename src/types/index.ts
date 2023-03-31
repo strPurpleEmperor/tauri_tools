@@ -10,3 +10,9 @@ export interface Rule {
 	rule: (arg: any) => any;
 	ruleName: string;
 }
+
+export interface VrSyncStore {
+	value: any;
+	listeners: Set<any>;
+	subscribe: () => void;
+}

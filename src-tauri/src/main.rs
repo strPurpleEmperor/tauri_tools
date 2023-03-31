@@ -9,7 +9,6 @@ use crate::types::{HREF, PDF, STATUS};
 mod get_pdf;
 mod types;
 mod get_href;
-mod get_pdf_list;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
