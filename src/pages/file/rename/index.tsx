@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import './index.css';
-import { listen } from '@tauri-apps/api/event';
+import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { InboxOutlined } from '@ant-design/icons';
 import { Button, Card, Input, message, notification, Space, Modal, UploadProps } from 'antd';
 import { useAtom } from 'jotai';
@@ -37,9 +37,15 @@ function Rename() {
 		});
 	}
 	useEffect(() => {
+		let u: UnlistenFn;
 		listen('tauri://file-drop', (event) => {
 			readDir(event.payload[0] as string);
+		}).then((res) => {
+			u = res;
 		});
+		return () => {
+			u();
+		};
 	}, []);
 	useEffect(() => {
 		const renameList = rename.split('\n');

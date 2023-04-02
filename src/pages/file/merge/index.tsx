@@ -5,11 +5,12 @@ import { DeleteOutlined, InboxOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Image, Input, message, Modal, Select, Space, Upload } from 'antd';
 import JSZip from 'jszip';
 import xlsx from 'node-xlsx';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TemplateHandler } from 'easy-template-x';
 import { dialog, fs } from '@tauri-apps/api';
+import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import mergeDemo from '../../../assets/merge_demo.png';
-import { getFileType, isNotVoidObj, RULES, void2empty } from '../../../tools';
+import { checkIn, getFileType, isNotVoidObj, RULES, void2empty } from '../../../tools';
 import { Rule } from '../../../types';
 
 interface FormatRule extends Rule {
@@ -20,6 +21,7 @@ interface FormatRule extends Rule {
 
 function Merge() {
 	const [modalForm] = Form.useForm();
+	const [wordName, setWordName] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [word, setWord] = useState<ArrayBuffer>(new ArrayBuffer(0));
 	const [excel, setExcel] = useState<any[]>([]);
@@ -27,6 +29,17 @@ function Merge() {
 	const [keys, setKeys] = useState<string[]>([]);
 	const [secureKeys, setSegueKeys] = useState<string[]>([]);
 	const [formatRule, setFormatRule] = useState<FormatRule[]>([]);
+	useEffect(() => {
+		let u: UnlistenFn;
+		listen('tauri://file-drop', (e) => {
+			console.log(e);
+		}).then((res) => {
+			u = res;
+		});
+		return () => {
+			u();
+		};
+	}, []);
 	useEffect(() => {
 		const excelData = JSON.parse(JSON.stringify(excel.length ? (excel[0].data as any) : []));
 		const keys: string[] = excelData.shift() || [];
@@ -145,6 +158,30 @@ function Merge() {
 	return (
 		<div className="merge">
 			<div className="merge_wrap">
+				<Button
+					className="merge_upload"
+					style={{ width: '100%', height: 160 }}
+					onClick={() => {
+						dialog
+							.open({
+								multiple: false,
+								filters: [{ extensions: ['docx'], name: '' }],
+							})
+							.then((namePath: string) => {
+								fs.readBinaryFile(namePath).then((res) => {
+									console.log(res);
+									setWord(res);
+									setWordName(namePath);
+								});
+							});
+					}}
+				>
+					<div style={{ padding: 0, fontSize: 45, color: '#1677ff' }}>
+						<InboxOutlined />
+					</div>
+					<div style={{ fontSize: 18 }}>单击上传或拖动word模板</div>
+					<p style={{ color: '#1677ff' }}>当前文件：{wordName}</p>
+				</Button>
 				<Upload.Dragger
 					className="merge_upload"
 					accept=".docx"

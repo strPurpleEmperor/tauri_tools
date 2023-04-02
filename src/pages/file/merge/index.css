@@ -7,8 +7,9 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  height: 160px;
+  height: 180px;
 }
+
 .merge_upload{
   flex: 1;
 }

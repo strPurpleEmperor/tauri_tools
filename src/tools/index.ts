@@ -119,3 +119,15 @@ export function void2empty(obj: Record<string, any>): Record<string, any> {
 	});
 	return obj;
 }
+
+export function checkIn(obj: HTMLElement, mouse: MouseEvent): boolean {
+	const x = mouse.clientX; // 鼠标相对屏幕横坐标
+	const y = mouse.clientY; // 鼠标相对屏幕纵坐标
+	const divX = Number(obj.getBoundingClientRect().left); // obj相对屏幕的横坐标
+	const divXWidth = Number(obj.getBoundingClientRect().left + obj.clientWidth); // obj相对屏幕的横坐标+width
+
+	const divY = Number(obj.getBoundingClientRect().top); // obj相对屏幕的纵坐标
+	const divYHeight = Number(obj.getBoundingClientRect().top + obj.clientHeight); // obj相对屏幕的纵坐标+height
+	console.log(x, y, divX, divY, divXWidth, divYHeight);
+	return x > divX && x < divXWidth && y > divY && y < divYHeight;
+}
